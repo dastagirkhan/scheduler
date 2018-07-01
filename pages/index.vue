@@ -65,8 +65,7 @@
     </el-table-column>
   </el-table>
    <el-form-item>
-    <el-button type="primary" @click="onSubmit">Create</el-button>
-    <el-button>Cancel</el-button>
+    <el-button type="primary" v-show="form_loaded" @click="onSubmit">{{ scheduler_new ? 'Create' : 'Update' }}</el-button>    
   </el-form-item>
   </el-form>
   </section>
@@ -84,7 +83,8 @@ export default {
     return {      
       schedulers_model:'',
       tableData:[],
-      scheduler_new:false
+      scheduler_new:false,
+      form_loaded:false
     }
   }, 
   head(){
@@ -106,6 +106,7 @@ export default {
     },
     onChange (option) {  
       this.scheduler_new = false;          
+      this.form_loaded = true;          
       this.schedulers.map((schedule) => {
         if(schedule.id == option){            
             // this.tableData = schedule.set;
@@ -122,6 +123,7 @@ export default {
     },
     createScheduler(){
         this.scheduler_new = true;
+        this.form_loaded = true;          
         this.tableData = [
               { "day" : "SUN" , "start" : '' , "end" : '' , edited:true},
               { "day" : "MON" , "start" : '' , "end" : '' , edited:true},
