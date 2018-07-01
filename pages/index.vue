@@ -101,9 +101,11 @@ export default {
         m = m < 10 ? '0' + m : m;
         return `${h}:${m}`;
     },  
-    editRow(row){   
-      this.tableData.map(function(td){td.edited = false; return td;});   
-      row.edited = true;
+    editRow(row){  
+      if(!this.scheduler_new){
+        this.tableData.map(function(td){td.edited = false; return td;});   
+        row.edited = true;
+      }
     },
     onChange (option) {  
       this.scheduler_new = false;          
