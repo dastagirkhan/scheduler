@@ -31,7 +31,7 @@
     >    
     </el-table-column>    
     <el-table-column 
-      label="From"           
+      label="Start"           
       width="280">
       <template slot-scope="scope">
           <el-time-select
@@ -48,7 +48,7 @@
     </el-table-column>
     <el-table-column
       prop="to"
-      label="To"
+      label="End"
       width="280">
       <template slot-scope="scope">
             <el-time-select
@@ -66,7 +66,8 @@
   </el-table>
    <el-form-item>
     <br/>
-    <el-button type="primary" style="float:left;" v-show="form_loaded" @click="onSubmit">{{ scheduler_new ? 'Create' : 'Update' }}</el-button>    
+    <el-button type="primary" style="float:left;" v-show="form_loaded && scheduler_new" @click="create">Create</el-button>    
+    <el-button type="primary" style="float:left;" v-show="form_loaded && !scheduler_new" @click="update">Update</el-button>    
   </el-form-item>
   </el-form>
   </section>
@@ -137,8 +138,39 @@ export default {
               { "day" : "SAT" , "start" : '' , "end" : '' , edited:true}
         ];  
     },
-    onSubmit() {
-        console.log('submit!');
+    async create() {
+        console.log('create!');
+        let { data } = await axios.post('/api/schedulers/create',{   
+                       name:'Lunch Specials',
+                       set:[
+                          { "scheduleId" : 4523 , "day" : "SUN" , "start" : 660 , "end" : 900 },
+                          { "scheduleId" : 4529 , "day" : "MON" , "start" : 660 , "end" : 900 },
+                          { "scheduleId" : 4528 , "day" : "TUE" , "start" : 660 , "end" : 900 },
+                          { "scheduleId" : 4527 , "day" : "WED" , "start" : 660 , "end" : 900 },
+                          { "scheduleId" : 4526 , "day" : "THU" , "start" : 660 , "end" : 900 },      
+                          { "scheduleId" : 4525 , "day" : "FRI" , "start" : 660 , "end" : 900 },
+                          { "scheduleId" : 4524 , "day" : "SAT" , "start" : 660 , "end" : 900 }
+                       ]
+                      }
+                  )
+        console.log(data);
+    },
+    async update() {
+        console.log('update!');        
+        let { data } = await axios.post('/api/schedulers/update',{   
+                       name:'Lunch Specials',
+                       set:[
+                          { "scheduleId" : 4523 , "day" : "SUN" , "start" : 660 , "end" : 900 },
+                          { "scheduleId" : 4529 , "day" : "MON" , "start" : 660 , "end" : 900 },
+                          { "scheduleId" : 4528 , "day" : "TUE" , "start" : 660 , "end" : 900 },
+                          { "scheduleId" : 4527 , "day" : "WED" , "start" : 660 , "end" : 900 },
+                          { "scheduleId" : 4526 , "day" : "THU" , "start" : 660 , "end" : 900 },      
+                          { "scheduleId" : 4525 , "day" : "FRI" , "start" : 660 , "end" : 900 },
+                          { "scheduleId" : 4524 , "day" : "SAT" , "start" : 660 , "end" : 900 }
+                       ]
+                      }
+                  )
+        console.log(data);
     }
   }
 

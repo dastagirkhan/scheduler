@@ -1,7 +1,13 @@
 const express = require('express')
+var bodyParser = require('body-parser')
 
 // Create express instnace
 const app = express()
+
+app.use( bodyParser.json() );       // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+  extended: true
+}));
 
 // Require API routes
 const schedulers = require('./routes/schedulers')

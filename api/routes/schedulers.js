@@ -53,4 +53,13 @@ router.get('/schedulers/:id', function (req, res, next) {
   }
 })
 
+
+router.post('/schedulers/create', function (req, res, next) {
+  res.json(schedulers)
+})
+
+router.post('/schedulers/update', function (req, res, next) {  
+  res.json(schedulers)
+})
+
 module.exports = router
