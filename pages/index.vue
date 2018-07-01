@@ -2,7 +2,7 @@
   <section class="container">    
     <h1 class="title">
       SCHEDULERS
-    </h1>        
+    </h1>           
      <el-select v-model="schedulers_model" placeholder="Viewing Schedulers" @change="onChange">
        <el-option
         v-for="item in schedulers"
@@ -15,7 +15,8 @@
      <i class="el-icon-circle-plus" @click="createScheduler"></i>
      <br>
      <br>
-     <el-input placeholder="Scheduler Name" v-model="scheduler_name" v-show="scheduler_new" style="width:50%"></el-input>     
+     <el-form ref="form" label-width="120px">
+     <el-input placeholder="Scheduler Name" v-show="scheduler_new" style="width:50%"></el-input>     
         <el-table
           :data="tableData"
           stripe
@@ -28,7 +29,7 @@
       label="Day"
       width="180"
     >    
-    </el-table-column>
+    </el-table-column>    
     <el-table-column 
       label="From"           
       width="280">
@@ -63,6 +64,11 @@
       </template>
     </el-table-column>
   </el-table>
+   <el-form-item>
+    <el-button type="primary" @click="onSubmit">Create</el-button>
+    <el-button>Cancel</el-button>
+  </el-form-item>
+  </el-form>
   </section>
 </template>
 
@@ -125,6 +131,9 @@ export default {
               { "day" : "FRI" , "start" : '' , "end" : '' , edited:true},
               { "day" : "SAT" , "start" : '' , "end" : '' , edited:true}
         ];  
+    },
+    onSubmit() {
+        console.log('submit!');
     }
   }
 
