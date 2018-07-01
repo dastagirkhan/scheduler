@@ -3,7 +3,7 @@
     <h1 class="title">
       SCHEDULERS
     </h1>           
-     <el-select v-model="schedulers_model" placeholder="Viewing Schedulers" @change="onChange">
+     <el-select v-model="scheduler_id" placeholder="Viewing Schedulers" @change="onChange">
        <el-option
         v-for="item in schedulers"
         :key="item.id"
@@ -16,26 +16,26 @@
      <br>
      <br>
      <el-form ref="form" label-width="120px">
-     <el-input placeholder="Scheduler Name" v-show="scheduler_new" style="width:50%"></el-input>     
+     <el-input placeholder="Scheduler Name" v-show="form_loaded" style="width:50%" v-model="scheduler_name" required></el-input>     
         <el-table
-          :data="tableData"
-          stripe
+          :data="tableData"          
           style="width: 75%;margin: 0px auto;"
           align="center"
           @cell-click="editRow"
         >
     <el-table-column      
-      prop="day"
+      prop="day"            
       label="Day"
       width="180"
     >    
     </el-table-column>    
     <el-table-column 
-      label="Start"           
+      label="Start"        
       width="280">
       <template slot-scope="scope">
           <el-time-select
           v-model="scope.row.start"          
+          name="start[]"          
           :picker-options="{
             start: '09:00',
             step: '00:15',
@@ -48,11 +48,12 @@
     </el-table-column>
     <el-table-column
       prop="to"
-      label="End"
+      label="End"      
       width="280">
       <template slot-scope="scope">
             <el-time-select
             v-model="scope.row.end"
+            name="end[]"
             :picker-options="{
               start: '08:30',
               step: '00:15',
@@ -65,9 +66,10 @@
     </el-table-column>
   </el-table>
    <el-form-item>
-    <br/>
+    <br/>    
     <el-button type="primary" style="float:left;" v-show="form_loaded && scheduler_new" @click="create">Create</el-button>    
     <el-button type="primary" style="float:left;" v-show="form_loaded && !scheduler_new" @click="update">Update</el-button>    
+    <el-button type="danger" style="float:left;" v-show="form_loaded && !scheduler_new" @click="del">Delete</el-button>    
   </el-form-item>
   </el-form>
   </section>
@@ -75,7 +77,15 @@
 
 <script>
 import axios from '~/plugins/axios'
-
+const days = [
+  { "day" : "SUN"},
+  { "day" : "MON"},
+  { "day" : "TUE"},
+  { "day" : "WED"},
+  { "day" : "THU"},      
+  { "day" : "FRI"},
+  { "day" : "SAT"}
+]
 export default {
   async asyncData () {
     let { data } = await axios.get('/api/schedulers')    
@@ -83,10 +93,12 @@ export default {
   },
   data(){
     return {      
-      schedulers_model:'',
       tableData:[],
       scheduler_new:false,
-      form_loaded:false
+      form_loaded:false ,
+      scheduler_id:'',
+      scheduler_name:'',
+      schedulers:[]   
     }
   }, 
   head(){
@@ -101,7 +113,12 @@ export default {
         h = h < 10 ? '0' + h : h;
         m = m < 10 ? '0' + m : m;
         return `${h}:${m}`;
-    },  
+    }, 
+    convertHrsMinsToMins(hms){
+      let a = hms.split(':'); // split it at the colons
+      // Hours are worth 60 minutes.
+      return(+a[0]) * 60 + (+a[1]);
+    },
     editRow(row){  
       if(!this.scheduler_new){
         this.tableData.map(function(td){td.edited = false; return td;});   
@@ -113,7 +130,8 @@ export default {
       this.form_loaded = true;          
       this.schedulers.map((schedule) => {
         if(schedule.id == option){            
-            // this.tableData = schedule.set;
+            // this.tableData = schedule.set;            
+            this.scheduler_name = schedule.name;
             this.tableData = schedule.set.map((set) => {                
                 if(set.to_hrs !== true){
                   set.start = this.convertMinsToHrsMins(set.start);
@@ -127,7 +145,8 @@ export default {
     },
     createScheduler(){
         this.scheduler_new = true;
-        this.form_loaded = true;          
+        this.form_loaded = true;   
+        this.scheduler_name = '';
         this.tableData = [
               { "day" : "SUN" , "start" : '' , "end" : '' , edited:true},
               { "day" : "MON" , "start" : '' , "end" : '' , edited:true},
@@ -139,38 +158,57 @@ export default {
         ];  
     },
     async create() {
-        console.log('create!');
-        let { data } = await axios.post('/api/schedulers/create',{   
-                       name:'Lunch Specials',
-                       set:[
-                          { "scheduleId" : 4523 , "day" : "SUN" , "start" : 660 , "end" : 900 },
-                          { "scheduleId" : 4529 , "day" : "MON" , "start" : 660 , "end" : 900 },
-                          { "scheduleId" : 4528 , "day" : "TUE" , "start" : 660 , "end" : 900 },
-                          { "scheduleId" : 4527 , "day" : "WED" , "start" : 660 , "end" : 900 },
-                          { "scheduleId" : 4526 , "day" : "THU" , "start" : 660 , "end" : 900 },      
-                          { "scheduleId" : 4525 , "day" : "FRI" , "start" : 660 , "end" : 900 },
-                          { "scheduleId" : 4524 , "day" : "SAT" , "start" : 660 , "end" : 900 }
-                       ]
-                      }
-                  )
-        console.log(data);
+        // console.log('create!');
+        if(this.$refs.form.$el.checkValidity()){
+          let set = Object.assign([],days);
+          console.log(set);
+
+          this.$refs.form.$el.elements['start[]'].forEach((el,i) => {            
+              set[i] = set[i] || {};
+              set[i].start = this.convertHrsMinsToMins(el.value);
+          });
+          
+          this.$refs.form.$el.elements['end[]'].forEach((el,i) => {            
+              set[i] = set[i] || {};
+              set[i].end = this.convertHrsMinsToMins(el.value);            
+          }); 
+          let { data } = await axios.post('/api/schedulers',{   
+                         name:this.scheduler_name,
+                         set: set
+                        }
+                    )
+          this.schedulers = data;
+          console.log(this.schedulers);
+        }
+
+        // console.log(data);
     },
-    async update() {
-        console.log('update!');        
-        let { data } = await axios.post('/api/schedulers/update',{   
-                       name:'Lunch Specials',
-                       set:[
-                          { "scheduleId" : 4523 , "day" : "SUN" , "start" : 660 , "end" : 900 },
-                          { "scheduleId" : 4529 , "day" : "MON" , "start" : 660 , "end" : 900 },
-                          { "scheduleId" : 4528 , "day" : "TUE" , "start" : 660 , "end" : 900 },
-                          { "scheduleId" : 4527 , "day" : "WED" , "start" : 660 , "end" : 900 },
-                          { "scheduleId" : 4526 , "day" : "THU" , "start" : 660 , "end" : 900 },      
-                          { "scheduleId" : 4525 , "day" : "FRI" , "start" : 660 , "end" : 900 },
-                          { "scheduleId" : 4524 , "day" : "SAT" , "start" : 660 , "end" : 900 }
-                       ]
-                      }
-                  )
-        console.log(data);
+    async update() {        
+        console.log('update!');   
+        if(this.$refs.form.$el.checkValidity()){
+          let set = Object.assign([],days);
+          
+          this.$refs.form.$el.elements['start[]'].forEach((el,i) => {            
+              set[i].start = this.convertHrsMinsToMins(el.value);
+          });
+          
+          this.$refs.form.$el.elements['end[]'].forEach((el,i) => {                        
+              set[i].end = this.convertHrsMinsToMins(el.value);            
+          });    
+
+          let { data } = await axios.post('/api/schedulers/update',{  
+                         id:this.scheduler_id,  
+                         name:this.scheduler_name,
+                         set:set
+                        }
+                    )
+        }
+        this.schedulers = data;
+        // console.log(data);
+    },
+    async del() { 
+      let { data } = await axios.delete('/api/schedulers/'+this.scheduler_id)
+      this.schedulers = data;
     }
   }
 

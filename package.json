@@ -19,8 +19,10 @@
     "cross-env": "^5.0.1",
     "element-ui": "^2.4.2",
     "express": "^4.15.3",
+    "jsonfile": "^4.0.0",
     "nuxt": "latest",
-    "source-map-support": "^0.4.15"
+    "source-map-support": "^0.4.15",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "babel-eslint": "^7.2.3",
