@@ -65,7 +65,8 @@
     </el-table-column>
   </el-table>
    <el-form-item>
-    <el-button type="primary" v-show="form_loaded" @click="onSubmit">{{ scheduler_new ? 'Create' : 'Update' }}</el-button>    
+    <br/>
+    <el-button type="primary" style="float:left;" v-show="form_loaded" @click="onSubmit">{{ scheduler_new ? 'Create' : 'Update' }}</el-button>    
   </el-form-item>
   </el-form>
   </section>
