@@ -39,7 +39,7 @@ router.post('/schedulers/update', function (req, res, next) {
         if(_scheduler.id == req.body.id){
             _schedulers[i] = req.body;
             jsonfile.writeFileSync(file, _schedulers);  
-            res.json(_schedulers)
+            res.json({status:'OK'})
         }
     })  
   }else{
