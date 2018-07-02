@@ -12,11 +12,12 @@
         >
        </el-option>
      </el-select>
-     <i class="el-icon-circle-plus" @click="createScheduler"></i>
+     <!-- <i class="el-icon-circle-plus" @click="createScheduler"></i> -->
+     <nuxt-link class="" to="/create"><i class="el-icon-circle-plus"></i></nuxt-link>
      <br>
      <br>
-     <el-form ref="form" label-width="120px">
-     <el-input placeholder="Scheduler Name" v-show="form_loaded" style="width:50%" v-model="scheduler_name" required></el-input>     
+     <el-form ref="form" label-width="120px" v-show="form_loaded">
+     <el-input placeholder="Scheduler Name" style="width:50%" v-model="scheduler_name" required></el-input>     
         <el-table
           :data="tableData"          
           style="width: 75%;margin: 0px auto;"
@@ -66,8 +67,7 @@
     </el-table-column>
   </el-table>
    <el-form-item>
-    <br/>    
-    <el-button type="primary" style="float:left;" v-show="form_loaded && scheduler_new" @click="create">Create</el-button>    
+    <br/>        
     <el-button type="primary" style="float:left;" v-show="form_loaded && !scheduler_new" @click="update">Update</el-button>    
     <el-button type="danger" style="float:left;" v-show="form_loaded && !scheduler_new" @click="del">Delete</el-button>    
   </el-form-item>
@@ -77,6 +77,7 @@
 
 <script>
 import axios from '~/plugins/axios'
+import {convertMinsToHrsMins,convertHrsMinsToMins} from '~/plugins/helpers'
 const days = [
   { "day" : "SUN"},
   { "day" : "MON"},
@@ -107,18 +108,6 @@ export default {
     }
   },  
   methods: { 
-    convertMinsToHrsMins(mins) {
-        let h = Math.floor(mins / 60);
-        let m = mins % 60;
-        h = h < 10 ? '0' + h : h;
-        m = m < 10 ? '0' + m : m;
-        return `${h}:${m}`;
-    }, 
-    convertHrsMinsToMins(hms){
-      let a = hms.split(':'); // split it at the colons
-      // Hours are worth 60 minutes.
-      return(+a[0]) * 60 + (+a[1]);
-    },
     editRow(row){  
       if(!this.scheduler_new){
         this.tableData.map(function(td){td.edited = false; return td;});   
@@ -134,66 +123,30 @@ export default {
             this.scheduler_name = schedule.name;
             this.tableData = schedule.set.map((set) => {                
                 if(set.to_hrs !== true){
-                  set.start = this.convertMinsToHrsMins(set.start);
-                  set.end   = this.convertMinsToHrsMins(set.end);
+                  set.start = convertMinsToHrsMins(set.start);
+                  set.end   = convertMinsToHrsMins(set.end);
                   set.to_hrs = true;
                 }
                 return set;
             });  
         }  
       });          
-    },
-    createScheduler(){
-        this.scheduler_new = true;
-        this.form_loaded = true;   
-        this.scheduler_name = '';
-        this.tableData = [
-              { "day" : "SUN" , "start" : '' , "end" : '' , edited:true},
-              { "day" : "MON" , "start" : '' , "end" : '' , edited:true},
-              { "day" : "TUE" , "start" : '' , "end" : '' , edited:true},
-              { "day" : "WED" , "start" : '' , "end" : '' , edited:true},
-              { "day" : "THU" , "start" : '' , "end" : '' , edited:true},      
-              { "day" : "FRI" , "start" : '' , "end" : '' , edited:true},
-              { "day" : "SAT" , "start" : '' , "end" : '' , edited:true}
-        ];  
-    },
-    async create() {
-        // console.log('create!');
-        if(this.$refs.form.$el.checkValidity()){
-          let set = Object.assign([],days);
-          console.log(set);
-
-          this.$refs.form.$el.elements['start[]'].forEach((el,i) => {            
-              set[i] = set[i] || {};
-              set[i].start = this.convertHrsMinsToMins(el.value);
-          });
-          
-          this.$refs.form.$el.elements['end[]'].forEach((el,i) => {            
-              set[i] = set[i] || {};
-              set[i].end = this.convertHrsMinsToMins(el.value);            
-          }); 
-          let { data } = await axios.post('/api/schedulers',{   
-                         name:this.scheduler_name,
-                         set: set
-                        }
-                    )
-          this.schedulers = data;
-          console.log(this.schedulers);
-        }
-
-        // console.log(data);
-    },
+    },    
     async update() {        
         console.log('update!');   
         if(this.$refs.form.$el.checkValidity()){
           let set = Object.assign([],days);
           
           this.$refs.form.$el.elements['start[]'].forEach((el,i) => {            
-              set[i].start = this.convertHrsMinsToMins(el.value);
+              set[i].start = convertHrsMinsToMins(el.value);
           });
           
           this.$refs.form.$el.elements['end[]'].forEach((el,i) => {                        
-              set[i].end = this.convertHrsMinsToMins(el.value);            
+              set[i].end = convertHrsMinsToMins(el.value);            
+              if( (!isNaN(set[i].start) && !isNaN(set[i].end) && set[i].end > set[i].start ) === false){
+                  set[i].start = ''
+                  set[i].end = ''
+              }
           });    
 
           let { data } = await axios.post('/api/schedulers/update',{  
@@ -202,13 +155,28 @@ export default {
                          set:set
                         }
                     )
+        if(data.status == 'NOK'){
+            this.$message({
+              type:'error',
+              message:data.message
+            })
+          }else {
+            this.$router.go();
+          }
+        }else {
+          this.$alert('Please fill the form before submit, Scheduler name is required!');
         }
-        this.schedulers = data;
-        // console.log(data);
+        
+        
     },
     async del() { 
-      let { data } = await axios.delete('/api/schedulers/'+this.scheduler_id)
-      this.schedulers = data;
+       this.$confirm('Are you sure to delete this scheduler set?')
+          .then(async () => {
+              let { data } = await axios.delete('/api/schedulers/'+this.scheduler_id)      
+              this.$router.go();       
+          })
+          .catch(() => {});
+      
     }
   }
 
